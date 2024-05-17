@@ -2,7 +2,7 @@ project:
   type: website
   output-dir: docs
 website:
-  title: "Lu Mao's Blog"
+  title: "Lu Mao's blog"
   navbar:
     right:
       - about.qmd
