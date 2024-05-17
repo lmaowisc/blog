@@ -1,0 +1,16 @@
+{
+  "hash": "60aa1218e7621e905bc4c68e66af6119",
+  "result": {
+    "markdown": "---\ntitle: \"How to get analytic confidence limits for a linear/quadratic regression line?\"\nauthor: \"Self\"\ndate: \"2024-04-17\"\ncategories: [code, how-to]\nimage: \"image.jpg\"\nexecute: \n  warning: false\n---\n\n\n$$\n\\def\\bs{\\boldsymbol}\n\\def\\T{{\\rm T}}\n$$\n\n## Data simulation\n\n\n::: {.cell}\n\n```{.r .cell-code}\nlibrary(tidyverse)\nlibrary(knitr)\n\n## simulate quadratic relationship\nset.seed(1234)\nx <- 1:20\ny <- x +  (x - 10)^2 + 10 * rnorm(20)\n\n\nplot(x, y)\n```\n\n::: {.cell-output-display}\n![](reg_ci_files/figure-html/unnamed-chunk-1-1.png){width=672}\n:::\n:::\n\n\n## General formula\n\nConsider the linear regression model $$\ny_i = \\bs x_i^\\T\\beta + \\epsilon_i\\,\\,\\ (i=1,\\ldots, n)\n$$ where $E(\\epsilon_i\\mid\\bs x_i)=0$.\n\n\n::: {.cell}\n\n```{.r .cell-code}\nobj <- lm(y ~ x + I(x^2))\n\n\npred_cl <- function(obj, alpha = 0.05){\n\n  obj <- summary(obj)\n  \nbeta <- obj$coefficients[, 1]\nS <- vcov(obj) \np <- length(beta) - 1\ndf <- obj$df[2]\n\n\nta <- qt(1 - alpha / 2, df)\n\n\nif (p==1){\n  err_coef <- c(\"g0\" = S[1, 1],\n                \"g1\" = 2 * S[1, 2],\n                \"g2\" = S[2, 2])\n}else{\n  if (p==2){\n   err_coef <- c(\"g0\" = S[1, 1],\n                 \"g1\" = 2 * S[1, 2],\n                 \"g2\" = S[2, 2] + 2 * S[1, 3],\n                 \"g3\" = 2 * S[2, 3],\n                 \"g4\" = S[3, 3])   \n  }\n  \n}\nlist(beta = beta, ta = ta, err_coef = err_coef)\n}\n\n\n\n# se.x <- sqrt(S[1, 1] + 2 * x * S[1, 2] + x^2 * S[2, 2])\n# yp = beta[1] + beta[2] * x\n# \n# se.x <- sqrt(S[1, 1] + 2 * x * S[1, 2] + x^2 * (S[2, 2] + 2 * S[1, 3]) +\n#                2 * S[2, 3] * x^3 + S[3, 3] * x^4)\n\n\n# yp = beta[1] + beta[2] * x + beta[3] * x^2\n\n\n\n\n\n\n\n# plot(x, y , main = ss)\n\n\nobj <- lm(y ~ x + I(x^2))\n\npred_obj <- pred_cl(obj)\n  \nbeta <- pred_obj$beta\nta <- pred_obj$ta\nerr_coef <- pred_obj$err_coef\n\nyp = cbind(1, x, x^2) %*% beta\nse.x <- sqrt(cbind(1, x, x^2, x^3,  x^4) %*% err_coef)\nymin = yp - ta * se.x\nymax = yp + ta * se.x\n\n\ndf <- tibble(x=x, \n             y=y,\n             yp = yp,\n             ymax = ymax,\n             ymin = ymin\n)\n\n\n\ndf |> \n  ggplot(aes(x= x, y = y)) +\n  geom_point()+\n  geom_smooth(method = \"lm\", formula = y ~ x + I(x^2)) +\n  theme_minimal() +\n  geom_line(aes(y = ymax)) +\n  geom_line(aes(y = ymin))\n```\n\n::: {.cell-output-display}\n![](reg_ci_files/figure-html/unnamed-chunk-2-1.png){width=672}\n:::\n:::",
+    "supporting": [
+      "reg_ci_files"
+    ],
+    "filters": [
+      "rmarkdown/pagebreak.lua"
+    ],
+    "includes": {},
+    "engineDependencies": {},
+    "preserve": {},
+    "postProcess": true
+  }
+}

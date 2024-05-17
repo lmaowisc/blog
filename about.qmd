@@ -1,0 +1,18 @@
+---
+title: "About"
+image: puppy.jpg
+about:
+  template: jolla
+  links:
+    - icon: twitter
+      text: Twitter
+      href: https://x.com/LuMaoWisc
+    - icon: linkedin
+      text: LinkedIn
+      href: https://www.linkedin.com/in/lu-mao-63589b14/
+    - icon: github
+      text: Github
+      href: https://github.com/lmaowisc
+---
+
+A blog about statistics, data science, R-programming, etc.

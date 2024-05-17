@@ -1,0 +1,127 @@
+---
+title: "How to get analytic confidence limits for a linear/quadratic regression line?"
+author: "Self"
+date: "2024-04-17"
+categories: [code, how-to]
+image: "image.jpg"
+execute: 
+  warning: false
+---
+
+$$
+\def\bs{\boldsymbol}
+\def\T{{\rm T}}
+$$
+
+## Data simulation
+
+```{r}
+library(tidyverse)
+library(knitr)
+
+## simulate quadratic relationship
+set.seed(1234)
+x <- 1:20
+y <- x +  (x - 10)^2 + 10 * rnorm(20)
+
+
+plot(x, y)
+
+```
+
+## General formula
+
+Consider the linear regression model $$
+y_i = \bs x_i^\T\beta + \epsilon_i\,\,\ (i=1,\ldots, n)
+$$ where $E(\epsilon_i\mid\bs x_i)=0$.
+
+```{r}
+
+
+obj <- lm(y ~ x + I(x^2))
+
+
+pred_cl <- function(obj, alpha = 0.05){
+
+  obj <- summary(obj)
+  
+beta <- obj$coefficients[, 1]
+S <- vcov(obj) 
+p <- length(beta) - 1
+df <- obj$df[2]
+
+
+ta <- qt(1 - alpha / 2, df)
+
+
+if (p==1){
+  err_coef <- c("g0" = S[1, 1],
+                "g1" = 2 * S[1, 2],
+                "g2" = S[2, 2])
+}else{
+  if (p==2){
+   err_coef <- c("g0" = S[1, 1],
+                 "g1" = 2 * S[1, 2],
+                 "g2" = S[2, 2] + 2 * S[1, 3],
+                 "g3" = 2 * S[2, 3],
+                 "g4" = S[3, 3])   
+  }
+  
+}
+list(beta = beta, ta = ta, err_coef = err_coef)
+}
+
+
+
+# se.x <- sqrt(S[1, 1] + 2 * x * S[1, 2] + x^2 * S[2, 2])
+# yp = beta[1] + beta[2] * x
+# 
+# se.x <- sqrt(S[1, 1] + 2 * x * S[1, 2] + x^2 * (S[2, 2] + 2 * S[1, 3]) +
+#                2 * S[2, 3] * x^3 + S[3, 3] * x^4)
+
+
+# yp = beta[1] + beta[2] * x + beta[3] * x^2
+
+
+
+
+
+
+
+# plot(x, y , main = ss)
+
+
+obj <- lm(y ~ x + I(x^2))
+
+pred_obj <- pred_cl(obj)
+  
+beta <- pred_obj$beta
+ta <- pred_obj$ta
+err_coef <- pred_obj$err_coef
+
+yp = cbind(1, x, x^2) %*% beta
+se.x <- sqrt(cbind(1, x, x^2, x^3,  x^4) %*% err_coef)
+ymin = yp - ta * se.x
+ymax = yp + ta * se.x
+
+
+df <- tibble(x=x, 
+             y=y,
+             yp = yp,
+             ymax = ymax,
+             ymin = ymin
+)
+
+
+
+df |> 
+  ggplot(aes(x= x, y = y)) +
+  geom_point()+
+  geom_smooth(method = "lm", formula = y ~ x + I(x^2)) +
+  theme_minimal() +
+  geom_line(aes(y = ymax)) +
+  geom_line(aes(y = ymin))
+
+
+
+```
